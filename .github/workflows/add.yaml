@@ -1,0 +1,29 @@
+name : Add PDF
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  add:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: 差分を push
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          for i in `seq 133637 140586`
+          do
+            curl -k https://cdn.intra.42.fr/pdf/pdf/${i}/en.subject.pdf > PDFs/${i}.pdf 2> /dev/null
+            cat PDFs/${i}.pdf | grep "<head><title>404 Not Found</title></head>" > /dev/null && rm PDFs/${i}.pdf
+            if [ -f PDFs/${i}.pdf ]; then
+                echo "Downloaded PDF ${i}.pdf"
+            fi
+            sleep 1
+            git remote set-url origin https://github-actions:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
+            git add .
+            git commit -m "GitHub Actions Pushing" | true
+            git push 2> /dev/null
+          done
